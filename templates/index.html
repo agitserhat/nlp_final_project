@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPT-2 Varlık Tabanlı Metin Oluşturma</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        .entity {
+            background-color: yellow;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">GPT-2 Varlık Tabanlı Metin Oluşturma</h1>
+        <form id="generate-form">
+            <div class="form-group">
+                <textarea class="form-control" id="input-text" rows="4" placeholder="Metin girin"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="model-select">Model:</label>
+                <select class="form-control" id="model-select" name="model">
+                    <option value="gpt2">GPT-2</option>
+                    <option value="gpt2-medium">GPT-2 Medium</option>
+                    <option value="gpt2-large">GPT-2 Large</option>
+                    <!-- Diğer model seçeneklerini buraya ekleyebilirsiniz -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="max-length-input">Max Length:</label>
+                <input type="range" class="form-control-range" id="max-length-input" name="max_length" min="1" max="500" value="150">
+                <span id="max-length-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="num-sequences-input">Num Sequences:</label>
+                <input type="range" class="form-control-range" id="num-sequences-input" name="num_return_sequences" min="1" max="5" value="1">
+                <span id="num-sequences-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="no-repeat-ngram-input">No Repeat Ngram Size:</label>
+                <input type="range" class="form-control-range" id="no-repeat-ngram-input" name="no_repeat_ngram_size" min="1" max="5" value="2">
+                <span id="no-repeat-ngram-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="temperature-input">Temperature:</label>
+                <input type="range" class="form-control-range" id="temperature-input" name="temperature" min="0.1" max="1.0" step="0.1" value="0.7">
+                <span id="temperature-value"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Metin Oluştur</button>
+        </form>
+        <div class="mt-5">
+            <h2>Varlıklar:</h2>
+            <p id="entities"></p>
+            <h2>Oluşturulan Metin:</h2>
+            <p id="generated-text"></p>
+
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#max-length-value').text($('#max-length-input').val());
+            $('#num-sequences-value').text($('#num-sequences-input').val());
+            $('#no-repeat-ngram-value').text($('#no-repeat-ngram-input').val());
+            $('#temperature-value').text($('#temperature-input').val());
+
+            $('#max-length-input').on('input', function () {
+                $('#max-length-value').text($(this).val());
+            });
+
+            $('#num-sequences-input').on('input', function () {
+                $('#num-sequences-value').text($(this).val());
+            });
+
+            $('#no-repeat-ngram-input').on('input', function () {
+                $('#no-repeat-ngram-value').text($(this).val());
+            });
+
+            $('#temperature-input').on('input', function () {
+                $('#temperature-value').text($(this).val());
+            });
+
+            $('#generate-form').submit(function (event) {
+                event.preventDefault();
+                var formData = {
+                    'text': $('#input-text').val(),
+                    'model': $('#model-select').val(),
+                    'max_length': parseInt($('#max-length-input').val()),
+                    'num_return_sequences': parseInt($('#num-sequences-input').val()),
+                    'no_repeat_ngram_size': parseInt($('#no-repeat-ngram-input').val()),
+                    'temperature': parseFloat($('#temperature-input').val())
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/generate',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (data) {
+                        $('#generated-text').html(data.generated_text);
+                        var entitiesHtml = '';
+                        data.entities.forEach(function (entity) {
+                            entitiesHtml += '<span class="entity">' + entity.text + ' (' + entity.label + ')</span>, ';
+                        });
+                        entitiesHtml = entitiesHtml.slice(0, -2); // Son virgülü kaldır
+                        $('#entities').html(entitiesHtml);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
